@@ -2,26 +2,27 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
-int
-main (int argc, char** argv)
+
+int main(int argc, char** argv)
 {
-  sensor_msgs::PointCloud2::Ptr cloud (new sensor_msgs::PointCloud2 ());
-  sensor_msgs::PointCloud2::Ptr cloud_filtered (new sensor_msgs::PointCloud2 ());
-  // ÌîÈëµãÔÆÊı¾İ
-  pcl::PCDReader reader;
-  // °ÑÂ·¾¶¸ÄÎª×Ô¼º´æ·ÅÎÄ¼şµÄÂ·¾¶
-  reader.read ("C:\\Users\\1987wangsanguo\\Desktop\\PCD_Viewer\\PCD_Viewer\\2f_only_voxel.pcd", *cloud); // ¼Ç×¡ÒªÊÂÏÈÏÂÔØÕâ¸öÊı¾İ¼¯£¡
-  std::cerr << "PointCloud before filtering: " << cloud->width * cloud->height 
-       << " data points (" << pcl::getFieldsList (*cloud) << ").";
-  // ´´½¨ÂË²¨Æ÷¶ÔÏó
-  pcl::VoxelGrid<sensor_msgs::PointCloud2> sor;
-  sor.setInputCloud (cloud);
-  sor.setLeafSize (0.01f, 0.01f, 0.01f);
-  sor.filter (*cloud_filtered);
-  std::cerr << "PointCloud after filtering: " << cloud_filtered->width * cloud_filtered->height 
-       << " data points (" << pcl::getFieldsList (*cloud_filtered) << ").";
-  pcl::PCDWriter writer;
-  writer.write ("2f.pcd", *cloud_filtered, 
-         Eigen::Vector4f::Zero (), Eigen::Quaternionf::Identity (), false);
-  return (0);
+    // å®šä¹‰è¾“å…¥ç‚¹äº‘ä¸è¾“å‡ºç‚¹äº‘
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+
+    // å¡«å…¥ç‚¹äº‘æ•°æ®
+    pcl::PCDReader reader;
+    auto ret = reader.read("../table_scene_lms400.pcd", *cloud);
+    std::cerr << "PointCloud before filtering: " << cloud->width * cloud->height << " data points (" << pcl::getFieldsList(*cloud) << ").";
+
+    // åˆ›å»ºæ»¤æ³¢å™¨å¯¹è±¡
+    pcl::VoxelGrid<pcl::PointXYZ> sor;
+    sor.setInputCloud(cloud);
+    sor.setLeafSize(0.01f, 0.01f, 0.01f);
+    sor.filter(*cloud_filtered);
+    std::cerr << "PointCloud after filtering: " << cloud_filtered->width * cloud_filtered->height << " data points (" << pcl::getFieldsList(*cloud_filtered) << ").";
+
+    pcl::PCDWriter writer;
+    writer.write("test.pcd", *cloud_filtered);
+
+    return (0);
 }

@@ -7,65 +7,77 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/extract_indices.h>
-int
-main (int argc, char** argv)
+
+int main(int argc, char** argv)
 {
-  sensor_msgs::PointCloud2::Ptr cloud_blob (new sensor_msgs::PointCloud2), cloud_filtered_blob (new sensor_msgs::PointCloud2);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZ>), cloud_p (new pcl::PointCloud<pcl::PointXYZ>), cloud_f (new pcl::PointCloud<pcl::PointXYZ>);
-  // ÌîÈëµãÔÆÊı¾İ
-  pcl::PCDReader reader;
-  reader.read ("table_scene_lms400.pcd", *cloud_blob);
-  std::cerr << "PointCloud before filtering: " << cloud_blob->width * cloud_blob->height << " data points." << std::endl;
-  // ´´½¨ÂË²¨Æ÷¶ÔÏó:Ê¹ÓÃÒ¶´óĞ¡Îª1cmµÄÏÂ²ÉÑù
-  pcl::VoxelGrid<sensor_msgs::PointCloud2> sor;
-  sor.setInputCloud (cloud_blob);
-  sor.setLeafSize (0.01f, 0.01f, 0.01f);
-  sor.filter (*cloud_filtered_blob);
-  // ×ª»¯ÎªÄ£°åµãÔÆ
-  pcl::fromROSMsg (*cloud_filtered_blob, *cloud_filtered);
-  std::cerr << "PointCloud after filtering: " << cloud_filtered->width * cloud_filtered->height << " data points." << std::endl;
-  // ½«ÏÂ²ÉÑùºóµÄÊı¾İ´æÈë´ÅÅÌ
-  pcl::PCDWriter writer;
-  writer.write<pcl::PointXYZ> ("table_scene_lms400_downsampled.pcd", *cloud_filtered, false);
-  pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
-  pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
-  // ´´½¨·Ö¸î¶ÔÏó
-  pcl::SACSegmentation<pcl::PointXYZ> seg;
-  // ¿ÉÑ¡
-  seg.setOptimizeCoefficients (true);
-  // ±ØÑ¡
-  seg.setModelType (pcl::SACMODEL_PLANE);
-  seg.setMethodType (pcl::SAC_RANSAC);
-  seg.setMaxIterations (1000);
-  seg.setDistanceThreshold (0.01);
-  // ´´½¨ÂË²¨Æ÷¶ÔÏó
-  pcl::ExtractIndices<pcl::PointXYZ> extract;
-  int i = 0, nr_points = (int) cloud_filtered->points.size ();
-  // µ±»¹ÓĞ30%Ô­Ê¼µãÔÆÊı¾İÊ±
-  while (cloud_filtered->points.size () > 0.3 * nr_points)
-  {
-    // ´ÓÓàÏÂµÄµãÔÆÖĞ·Ö¸î×î´óÆ½Ãæ×é³É²¿·Ö
-    seg.setInputCloud (cloud_filtered);
-    seg.segment (*inliers, *coefficients);
-    if (inliers->indices.size () == 0)
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_blob(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered_blob(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_p(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_f(new pcl::PointCloud<pcl::PointXYZ>);
+
+    // å¡«å…¥ç‚¹äº‘æ•°æ®
+    pcl::PCDReader reader;
+    reader.read("../table_scene_lms400.pcd", *cloud_blob);
+    std::cerr << "PointCloud before filtering: " << cloud_blob->width * cloud_blob->height << " data points." << std::endl;
+
+    // åˆ›å»ºæ»¤æ³¢å™¨å¯¹è±¡:ä½¿ç”¨å¶å¤§å°ä¸º1cmçš„ä¸‹é‡‡æ ·
+    pcl::VoxelGrid<pcl::PointXYZ> sor;
+    sor.setInputCloud(cloud_blob);
+    sor.setLeafSize(0.01f, 0.01f, 0.01f);
+    sor.filter(*cloud_filtered);
+
+    // è½¬åŒ–ä¸ºæ¨¡æ¿ç‚¹äº‘
+    //pcl::fromROSMsg(*cloud_filtered_blob, *cloud_filtered);
+    std::cerr << "PointCloud after filtering: " << cloud_filtered->width * cloud_filtered->height << " data points." << std::endl;
+
+    // å°†ä¸‹é‡‡æ ·åçš„æ•°æ®å­˜å…¥ç£ç›˜
+    pcl::PCDWriter writer;
+    writer.write<pcl::PointXYZ>("table_scene_lms400_downsampled.pcd", *cloud_filtered, false);
+
+
+    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
+    pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+    // åˆ›å»ºåˆ†å‰²å¯¹è±¡
+    pcl::SACSegmentation<pcl::PointXYZ> seg;
+    // å¯é€‰
+    seg.setOptimizeCoefficients(true);
+    // å¿…é€‰
+    seg.setModelType(pcl::SACMODEL_PLANE);
+    seg.setMethodType(pcl::SAC_RANSAC);
+    seg.setMaxIterations(1000);
+    seg.setDistanceThreshold(0.01);
+
+    // åˆ›å»ºæ»¤æ³¢å™¨å¯¹è±¡
+    pcl::ExtractIndices<pcl::PointXYZ> extract;
+    int i = 0, nr_points = (int)cloud_filtered->points.size();
+    // å½“è¿˜æœ‰30%åŸå§‹ç‚¹äº‘æ•°æ®æ—¶
+    while (cloud_filtered->points.size() > 0.3 * nr_points)
     {
-      std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
-      break;
+        // ä»ä½™ä¸‹çš„ç‚¹äº‘ä¸­åˆ†å‰²æœ€å¤§å¹³é¢ç»„æˆéƒ¨åˆ†
+        seg.setInputCloud(cloud_filtered);
+        seg.segment(*inliers, *coefficients);
+        if (inliers->indices.size() == 0)
+        {
+            std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
+            break;
+        }
+
+        // åˆ†ç¦»å†…å±‚
+        extract.setInputCloud(cloud_filtered);
+        extract.setIndices(inliers);
+        extract.setNegative(false);
+        extract.filter(*cloud_p);
+        std::cerr << "PointCloud representing the planar component: " << cloud_p->width * cloud_p->height << " data points." << std::endl;
+        std::stringstream ss;
+        ss << "table_scene_lms400_plane_" << i << ".pcd";
+        writer.write<pcl::PointXYZ>(ss.str(), *cloud_p, false);
+
+        // åˆ›å»ºæ»¤æ³¢å™¨å¯¹è±¡
+        extract.setNegative(true);
+        extract.filter(*cloud_f);
+        cloud_filtered.swap(cloud_f);
+        i++;
     }
-    // ·ÖÀëÄÚ²ã
-    extract.setInputCloud (cloud_filtered);
-    extract.setIndices (inliers);
-    extract.setNegative (false);
-    extract.filter (*cloud_p);
-    std::cerr << "PointCloud representing the planar component: " << cloud_p->width * cloud_p->height << " data points." << std::endl;
-    std::stringstream ss;
-    ss << "table_scene_lms400_plane_" << i << ".pcd";
-    writer.write<pcl::PointXYZ> (ss.str (), *cloud_p, false);
-    // ´´½¨ÂË²¨Æ÷¶ÔÏó
-    extract.setNegative (true);
-    extract.filter (*cloud_f);
-    cloud_filtered.swap (cloud_f);
-    i++;
-  }
-  return (0);
+    return (0);
 }
