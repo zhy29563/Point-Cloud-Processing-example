@@ -1,78 +1,81 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/io/openni_grabber.h>
+#include <pcl/io/openni2_grabber.h>
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/compression/octree_pointcloud_compression.h>
-#include <stdio.h>
+#include <pcl/compression/compression_profiles.h>
 #include <sstream>
-#include <stdlib.h>
 
 #ifdef WIN32
-# define sleep(x) Sleep((x)*1000)
+# define SLEEP(x) Sleep((x)*1000)
 #endif
 
 class SimpleOpenNIViewer
 {
 public:
-SimpleOpenNIViewer () :
-viewer (" Point Cloud Compression Example")
-  {
-  }
-
-void
-cloud_cb_ (const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr& cloud)
-  {
-if (!viewer.wasStopped ())
+    SimpleOpenNIViewer() : viewer(" Point Cloud Compression Example")
     {
-// ´æ´¢Ñ¹ËõµãÔÆµÄ×Ö½ÚÁ÷
-std::stringstream compressedData;
-// Êä³öµãÔÆ
-pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloudOut (new pcl::PointCloud<pcl::PointXYZRGBA> ());
-// Ñ¹ËõµãÔÆ
-PointCloudEncoder->encodePointCloud (cloud, compressedData);
-// ½âÑ¹ËõµãÔÆ
-PointCloudDecoder->decodePointCloud (compressedData, cloudOut);
-//¿ÉÊÓ»¯½âÑ¹ËõµãÔÆ
-viewer.showCloud (cloudOut);
     }
-  }
 
-void
-run ()
-  {
-bool showStatistics=true;
-// Ñ¹ËõÑ¡ÏîÏê¼û /io/include/pcl/compression/compression_profiles.h
-pcl::octree::compression_Profiles_e compressionProfile=pcl::octree::MED_RES_ONLINE_COMPRESSION_WITH_COLOR;
-// ³õÊ¼»¯Ñ¹ËõÓë½âÑ¹Ëõ¶ÔÏó
-PointCloudEncoder=new pcl::octree::PointCloudCompression<pcl::PointXYZRGBA> (compressionProfile, showStatistics);
-PointCloudDecoder=new pcl::octree::PointCloudCompression<pcl::PointXYZRGBA> ();
-//´´½¨´Ó OpenNI»ñÈ¡µãÔÆµÄ¶ÔÏó
-pcl::Grabber* interface =new pcl::OpenNIGrabber ();
-//½¨Á¢»Øµ÷º¯Êı
-    boost::function<void
-   (const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr&)> f = boost::bind (&SimpleOpenNIViewer::cloud_cb_, this, _1);
-// ½¨Á¢»Øµ÷º¯ÊıÓë»Øµ÷ĞÅºÅÖ®¼äÁªÏµ
-boost::signals2::connection c = interface->registerCallback (f);
-// ¿ªÊ¼½ÓÊÕµãÔÆÊı¾İÁ÷
-interface->start ();
-while (!viewer.wasStopped ())
+void cloud_cb_(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr& cloud)
+{
+    if (!viewer.wasStopped())
     {
-sleep (1);
+        // å­˜å‚¨å‹ç¼©ç‚¹äº‘çš„å­—èŠ‚æµ
+        std::stringstream compressedData;
+        // è¾“å‡ºç‚¹äº‘
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloudOut(new pcl::PointCloud<pcl::PointXYZRGBA>());
+        // å‹ç¼©ç‚¹äº‘
+        point_cloud_encoder->encodePointCloud(cloud, compressedData);
+        // è§£å‹ç¼©ç‚¹äº‘
+        point_cloud_decoder->decodePointCloud(compressedData, cloudOut);
+        //å¯è§†åŒ–è§£å‹ç¼©ç‚¹äº‘
+        viewer.showCloud(cloudOut);
     }
-interface->stop ();
-// É¾³ıµãÔÆÑ¹ËõÓë½âÑ¹Ëõ¶ÔÏóÊµÀı
-delete (PointCloudEncoder);
-delete (PointCloudDecoder);
-  }
-pcl::visualization::CloudViewer viewer;
-pcl::octree::PointCloudCompression<pcl::PointXYZRGBA>*PointCloudEncoder;
-pcl::octree::PointCloudCompression<pcl::PointXYZRGBA>*PointCloudDecoder;
+}
+
+    void run()
+    {
+        const auto show_statistics = true;
+
+        // å‹ç¼©é€‰é¡¹è¯¦è§ /compression/compression_profiles.h
+        const auto compression_profile = pcl::io::MED_RES_ONLINE_COMPRESSION_WITH_COLOR;
+
+        // åˆå§‹åŒ–å‹ç¼©ä¸è§£å‹ç¼©å¯¹è±¡
+        point_cloud_encoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA>(compression_profile, show_statistics);
+        point_cloud_decoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA>();
+
+        //åˆ›å»ºä» OpenNIè·å–ç‚¹äº‘çš„å¯¹è±¡
+        pcl::Grabber* interface = new pcl::io::OpenNI2Grabber();
+
+        //å»ºç«‹å›è°ƒå‡½æ•°
+        const boost::function<void(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr&)> f = boost::bind(&SimpleOpenNIViewer::cloud_cb_, this);
+
+        auto c = interface->registerCallback(f);
+
+        // å¼€å§‹æ¥æ”¶ç‚¹äº‘æ•°æ®æµ
+        interface->start();
+        while (!viewer.wasStopped())
+        {
+            SLEEP(1);
+        }
+
+        interface->stop();
+
+        // åˆ é™¤ç‚¹äº‘å‹ç¼©ä¸è§£å‹ç¼©å¯¹è±¡å®ä¾‹
+        delete (point_cloud_encoder);
+        delete (point_cloud_decoder);
+    }
+
+    pcl::visualization::CloudViewer viewer;
+    pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA>* point_cloud_encoder;
+    pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA>* point_cloud_decoder;
 };
 
-int
-main (int argc, char**argv)
+
+int main(int argc, char** argv)
 {
-SimpleOpenNIViewer v;
-v.run ();
-return (0);
-}	
+    SimpleOpenNIViewer v;
+    v.run();
+    return (0);
+}

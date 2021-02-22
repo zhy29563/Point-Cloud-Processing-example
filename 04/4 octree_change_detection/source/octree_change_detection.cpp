@@ -3,53 +3,58 @@
 #include <iostream>
 #include <vector>
 #include <ctime>
-	
-int
-main (intargc, char**argv)
+
+int main(int argc, char** argv)
 {
-srand ((unsignedint) time (NULL));
-// °Ë²æÊ÷·Ö±æÂÊ ¼´ÌåËØµÄ´óĞ¡
-float resolution =32.0f;
-// ³õÊ¼»¯¿Õ¼ä±ä»¯¼ì²â¶ÔÏó
-pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ>octree (resolution);
-pcl::PointCloud<pcl::PointXYZ>::PtrcloudA (newpcl::PointCloud<pcl::PointXYZ> );
-//ÎªcloudA´´½¨µãÔÆ
-cloudA->width =128;
-cloudA->height =1;
-cloudA->points.resize (cloudA->width *cloudA->height);
-for (size_ti=0; i<cloudA->points.size (); ++i)
-  {
-cloudA->points[i].x =64.0f* rand () / (RAND_MAX +1.0f);
-cloudA->points[i].y =64.0f* rand () / (RAND_MAX +1.0f);
-cloudA->points[i].z =64.0f* rand () / (RAND_MAX +1.0f);
-  }
-//Ìí¼ÓµãÔÆµ½°Ë²æÊ÷£¬½¨Á¢°Ë²æÊ÷
-octree.setInputCloud (cloudA);
-octree.addPointsFromInputCloud ();
-// ½»»»°Ë²æÊ÷»º´æ£¬µ«ÊÇcloudA¶ÔÓ¦µÄ°Ë²æÊ÷ÈÔÔÚÄÚ´æÖĞ
-octree.switchBuffers ();
-pcl::PointCloud<pcl::PointXYZ>::PtrcloudB (new pcl::PointCloud<pcl::PointXYZ> );
-// ÎªcloudB´´½¨µãÔÆ
-cloudB->width =128;
-cloudB->height =1;
-cloudB->points.resize (cloudB->width *cloudB->height);
-for (size_ti=0; i<cloudB->points.size (); ++i)
-  {
-cloudB->points[i].x =64.0f* rand () / (RAND_MAX +1.0f);
-cloudB->points[i].y =64.0f* rand () / (RAND_MAX +1.0f);
-cloudB->points[i].z =64.0f* rand () / (RAND_MAX +1.0f);
-  }
-//Ìí¼Ó cloudBµ½°Ë²æÊ÷
-octree.setInputCloud (cloudB);
-octree.addPointsFromInputCloud ();
-std::vector<int>newPointIdxVector;
-//»ñÈ¡Ç°Ò»cloudA¶ÔÓ¦µÄ°Ë²æÊ÷ÔÚcloudB¶ÔÓ¦°Ë²æÊ÷ÖĞÃ»ÓĞµÄÌåËØ
-octree.getPointIndicesFromNewVoxels (newPointIdxVector);
-//´òÓ¡Êä³öµã
-std::cout<<"Output from getPointIndicesFromNewVoxels:"<<std::endl;
-for (size_ti=0; i<newPointIdxVector.size (); ++i)
-std::cout<<i<<"# Index:"<<newPointIdxVector[i]
-<<"  Point:"<<cloudB->points[newPointIdxVector[i]].x <<" "
-<<cloudB->points[newPointIdxVector[i]].y <<" "
-<<cloudB->points[newPointIdxVector[i]].z <<std::endl;
+    srand(static_cast<unsigned>(time(nullptr)));
+
+    // å…«å‰æ ‘åˆ†è¾¨ç‡ï¼Œå³ä½“ç´ çš„å¤§å°
+    const auto resolution = 32.0;
+
+    // åˆå§‹åŒ–ç©ºé—´å˜åŒ–æ£€æµ‹å¯¹è±¡
+    pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree(resolution);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloudA(new pcl::PointCloud<pcl::PointXYZ>);
+
+    // ä¸ºcloudAç‚¹äº‘å¡«å……æ•°æ®
+    cloudA->width = 128;  // è®¾ç½®ç‚¹äº‘cloudAç‚¹æ•°
+    cloudA->height = 1;   // è®¾ç½®ç‚¹äº‘cloudAä¸ºæ— åºç‚¹äº‘
+    cloudA->points.resize(cloudA->width * cloudA->height);
+    for (size_t i = 0; i < cloudA->points.size(); ++i)
+    {
+        cloudA->points[i].x = 64.0f * rand() / (RAND_MAX + 1.0f);
+        cloudA->points[i].y = 64.0f * rand() / (RAND_MAX + 1.0f);
+        cloudA->points[i].z = 64.0f * rand() / (RAND_MAX + 1.0f);
+    }
+    // æ·»åŠ ç‚¹äº‘åˆ°å…«å‰æ ‘ï¼Œæ„å»ºå…«å‰æ ‘
+    octree.setInputCloud(cloudA);
+    octree.addPointsFromInputCloud();
+
+    // äº¤æ¢å…«å‰æ ‘ç¼“å­˜ï¼Œä½†æ˜¯cloudAå¯¹åº”çš„å…«å‰æ ‘ç»“æ„ä»åœ¨å†…å­˜ä¸­
+    octree.switchBuffers();
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloudB(new pcl::PointCloud<pcl::PointXYZ>);
+
+    // ä¸ºcloudBåˆ›å»ºç‚¹äº‘
+    cloudB->width = 128;
+    cloudB->height = 1;
+    cloudB->points.resize(cloudB->width * cloudB->height);
+    for (size_t i = 0; i < cloudB->points.size(); ++i)
+    {
+        cloudB->points[i].x = 64.0f * rand() / (RAND_MAX + 1.0f);
+        cloudB->points[i].y = 64.0f * rand() / (RAND_MAX + 1.0f);
+        cloudB->points[i].z = 64.0f * rand() / (RAND_MAX + 1.0f);
+    }
+
+    //æ·»åŠ cloudBåˆ°å…«å‰æ ‘
+    octree.setInputCloud(cloudB);
+    octree.addPointsFromInputCloud();
+
+    std::vector<int>newPointIdxVector;
+    // è·å–å‰ä¸€cloudAå¯¹åº”çš„å…«å‰æ ‘åœ¨cloudBå¯¹åº”å…«å‰æ ‘ä¸­æ²¡æœ‰çš„ç‚¹é›†
+    octree.getPointIndicesFromNewVoxels(newPointIdxVector);
+
+    // è¾“å‡º
+    std::cout << "Output from getPointIndicesFromNewVoxels:" << std::endl;
+    for (size_t i = 0; i < newPointIdxVector.size(); ++i)
+        std::cout << i << "# Index:" << newPointIdxVector[i] << "  Point:" << cloudB->points[newPointIdxVector[i]].x << " " << cloudB->points[newPointIdxVector[i]].y << " "<< cloudB->points[newPointIdxVector[i]].z << std::endl;
 }

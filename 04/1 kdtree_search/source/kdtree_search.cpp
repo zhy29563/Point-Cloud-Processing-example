@@ -4,57 +4,61 @@
 #include <vector>
 #include <ctime>
 
-int main (int argc, char**argv)
+int main(int argc, char** argv)
 {
-srand (time (NULL));
-pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-//µãÔÆÉú³É
-cloud->width =1000;
-cloud->height =1;
-cloud->points.resize (cloud->width * cloud->height);
-for (size_t i=0; i< cloud->points.size (); ++i)
-  {
-cloud->points[i].x =1024.0f* rand () / (RAND_MAX +1.0f);
-cloud->points[i].y =1024.0f* rand () / (RAND_MAX +1.0f);
-cloud->points[i].z =1024.0f* rand () / (RAND_MAX +1.0f);
-  }
-pcl::KdTreeFLANN<pcl::PointXYZ>kdtree;
-kdtree.setInputCloud (cloud);
-pcl::PointXYZ searchPoint;
-searchPoint.x=1024.0f* rand () / (RAND_MAX +1.0f);
-searchPoint.y=1024.0f* rand () / (RAND_MAX +1.0f);
-searchPoint.z=1024.0f* rand () / (RAND_MAX +1.0f);
-// k½üÁÚËÑË÷
-int K =10;
-std::vector<int>pointIdxNKNSearch(K);
-std::vector<float>pointNKNSquaredDistance(K);
-std::cout<<"K nearest neighbor search at ("<<searchPoint.x
-<<" "<<searchPoint.y
-<<" "<<searchPoint.z
-<<") with K="<< K <<std::endl;
-if ( kdtree.nearestKSearch (searchPoint, K, pointIdxNKNSearch, pointNKNSquaredDistance) >0 )
-  {
-for (size_t i=0; i<pointIdxNKNSearch.size (); ++i)
-std::cout<<"    "<<   cloud->points[ pointIdxNKNSearch[i] ].x 
-<<" "<< cloud->points[pointIdxNKNSearch[i] ].y 
-<<" "<< cloud->points[pointIdxNKNSearch[i] ].z 
-<<" (squared distance: "<<pointNKNSquaredDistance[i] <<")"<<std::endl;
-  }
-// ÔÚ°ë¾¶rÄÚËÑË÷½üÁÚ
-std::vector<int> pointIdxRadiusSearch;
-std::vector<float> pointRadiusSquaredDistance;
-float radius =256.0f* rand () / (RAND_MAX +1.0f);
-std::cout<<"Neighbors within radius search at ("<<searchPoint.x
-<<" "<<searchPoint.y
-<<" "<<searchPoint.z
-<<") with radius="<< radius <<std::endl;
-if ( kdtree.radiusSearch (searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) >0 )
-  {
-for (size_t i=0; i<pointIdxRadiusSearch.size (); ++i)
-std::cout<<"    "<<   cloud->points[ pointIdxRadiusSearch[i] ].x 
-<<" "<< cloud->points[pointIdxRadiusSearch[i] ].y 
-<<" "<< cloud->points[pointIdxRadiusSearch[i] ].z 
-<<" (squared distance: "<<pointRadiusSquaredDistance[i] <<")"<<std::endl;
-  }
-return 0;
+    srand(time(NULL));
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+
+    // è®¾ç½®å‚æ•°
+    cloud->width = 2000;
+    cloud->height = 1;
+    cloud->points.resize(cloud->width * cloud->height);
+
+    // å¡«å……ç‚¹äº‘
+    for (size_t i = 0; i < cloud->points.size(); ++i)
+    {
+        cloud->points[i].x = 1024.0f * rand() / (RAND_MAX + 1.0f);
+        cloud->points[i].y = 1024.0f * rand() / (RAND_MAX + 1.0f);
+        cloud->points[i].z = 1024.0f * rand() / (RAND_MAX + 1.0f);
+    }
+
+    // åˆ›å»ºK-D Treeå¯¹è±¡
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+
+    // å‘K-D Treeå¯¹è±¡ä¸­å¡«å……ç‚¹äº‘
+    kdtree.setInputCloud(cloud);
+
+    // åˆ›å»ºæœç´¢ç‚¹
+    pcl::PointXYZ search_point;
+    search_point.x = rand() * 1024.0f / (RAND_MAX + 1.0f);
+    search_point.y = rand() * 1024.0f / (RAND_MAX + 1.0f);
+    search_point.z = rand() * 1024.0f / (RAND_MAX + 1.0f);
+
+    // é‚»åŸŸå¤§å°è¿›è¡Œæœç´¢
+    const auto k = 10;
+    std::vector<int> point_idx_nkn_search(k);
+    std::vector<float> point_nkn_squared_distance(k);
+
+    std::cout << "K nearest neighbor search at (" << search_point.x << " " << search_point.y << " " << search_point.z << ") with K=" << k << std::endl;
+    
+    if (kdtree.nearestKSearch(search_point, k, point_idx_nkn_search, point_nkn_squared_distance) > 0)
+    {
+        for (size_t i = 0; i < point_idx_nkn_search.size(); ++i)
+            std::cout << "    " << cloud->points[point_idx_nkn_search[i]].x << " " << cloud->points[point_idx_nkn_search[i]].y << " " << cloud->points[point_idx_nkn_search[i]].z << " (squared distance: " << point_nkn_squared_distance[i] << ")" << std::endl;
+    }
+
+    // é‚»åŸŸåŠå¾„è¿›è¡Œæœç´¢
+    std::vector<int> point_idx_radius_search;
+    std::vector<float> point_radius_squared_distance;
+    const auto radius = rand() * 256.0 / (RAND_MAX + 1.0f);
+
+    std::cout << "Neighbors within radius search at (" << search_point.x << " " << search_point.y << " " << search_point.z << ") with radius=" << radius << std::endl;
+
+    const auto num = kdtree.radiusSearch(search_point, radius, point_idx_radius_search, point_radius_squared_distance);
+    if (num > 0)
+    {
+        for (size_t i = 0; i < point_idx_radius_search.size(); ++i)
+            std::cout << "    " << cloud->points[point_idx_radius_search[i]].x << " " << cloud->points[point_idx_radius_search[i]].y << " " << cloud->points[point_idx_radius_search[i]].z << " (squared distance: " << point_radius_squared_distance[i] << ")" << std::endl;
+    }
+    return 0;
 }
