@@ -6,58 +6,65 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/console/time.h>
+
 using namespace std;
 
 namespace pcl
 {
-  template<>
+    template<>
     struct SIFTKeypointFieldSelector<PointXYZ>
     {
-      inline float
-      operator () (const PointXYZ &p) const
-      {
-    return p.z;
-      }
+        inline float operator () (const PointXYZ& p) const
+        {
+            return p.z;
+        }
     };
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_xyz(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::io::loadPCDFile("../pig.pcd", *cloud_xyz);
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::io::loadPCDFile (argv[1], *cloud_xyz);
+    const float min_scale = 0.01f;
+    const int n_octaves = 6;
+    const int n_scales_per_octave = 4;
+    const float min_contrast = 0.01f;
 
-  const float min_scale = stof(argv[2]);          
-  const int n_octaves = stof(argv[3]);            
-  const int n_scales_per_octave = stof(argv[4]);  
-  const float min_contrast = stof(argv[5]);       
- 
-  pcl::SIFTKeypoint<pcl::PointXYZ, pcl::PointWithScale> sift;//´´½¨sift¹Ø¼üµã¼ì²â¶ÔÏó
-  pcl::PointCloud<pcl::PointWithScale> result;
-  sift.setInputCloud(cloud_xyz);//ÉèÖÃÊäÈëµãÔÆ
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ> ());
-  sift.setSearchMethod(tree);//´´½¨Ò»¸ö¿ÕµÄkdÊ÷¶ÔÏótree£¬²¢°ÑËü´«µİ¸øsift¼ì²â¶ÔÏó
-  sift.setScales(min_scale, n_octaves, n_scales_per_octave);//Ö¸¶¨ËÑË÷¹Ø¼üµãµÄ³ß¶È·¶Î§
-  sift.setMinimumContrast(min_contrast);//ÉèÖÃÏŞÖÆ¹Ø¼üµã¼ì²âµÄãĞÖµ
-  sift.compute(result);//Ö´ĞĞsift¹Ø¼üµã¼ì²â£¬±£´æ½á¹ûÔÚresult
+    // åˆ›å»ºsiftå…³é”®ç‚¹æ£€æµ‹å¯¹è±¡
+    pcl::SIFTKeypoint<pcl::PointXYZ, pcl::PointWithScale> sift;
+    pcl::PointCloud<pcl::PointWithScale> result;
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_temp (new pcl::PointCloud<pcl::PointXYZ>);
-  copyPointCloud(result, *cloud_temp);//½«µãÀàĞÍpcl::PointWithScaleµÄÊı¾İ×ª»»ÎªµãÀàĞÍpcl::PointXYZµÄÊı¾İ
- 
-  //¿ÉÊÓ»¯ÊäÈëµãÔÆºÍ¹Ø¼üµã
-  pcl::visualization::PCLVisualizer viewer("Sift keypoint");
-  viewer.setBackgroundColor( 255, 255, 255 );
-  viewer.addPointCloud(cloud_xyz, "cloud");
-  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,0,0,0,"cloud");
-  viewer.addPointCloud(cloud_temp, "keypoints");
-  viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 9, "keypoints");
-  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,0,0,255,"keypoints");
+    sift.setInputCloud(cloud_xyz);//è®¾ç½®è¾“å…¥ç‚¹äº‘
 
-  while(!viewer.wasStopped ())
-  {
-    viewer.spinOnce ();
-  }
-  return 0;
-  
+    // åˆ›å»ºä¸€ä¸ªç©ºçš„kdæ ‘å¯¹è±¡treeï¼Œå¹¶æŠŠå®ƒä¼ é€’ç»™siftæ£€æµ‹å¯¹è±¡
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
+    sift.setSearchMethod(tree);
+
+    // æŒ‡å®šæœç´¢å…³é”®ç‚¹çš„å°ºåº¦èŒƒå›´
+    sift.setScales(min_scale, n_octaves, n_scales_per_octave);
+    // è®¾ç½®é™åˆ¶å…³é”®ç‚¹æ£€æµ‹çš„é˜ˆå€¼
+    sift.setMinimumContrast(min_contrast);
+    // æ‰§è¡Œsiftå…³é”®ç‚¹æ£€æµ‹ï¼Œä¿å­˜ç»“æœåœ¨result
+    sift.compute(result);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZ>);
+    // å°†ç‚¹ç±»å‹pcl::PointWithScaleçš„æ•°æ®è½¬æ¢ä¸ºç‚¹ç±»å‹pcl::PointXYZçš„æ•°æ®
+    copyPointCloud(result, *cloud_temp);
+
+    //å¯è§†åŒ–è¾“å…¥ç‚¹äº‘å’Œå…³é”®ç‚¹
+    pcl::visualization::PCLVisualizer viewer("Sift keypoint");
+    viewer.setBackgroundColor(255, 255, 255);
+    viewer.addPointCloud(cloud_xyz, "cloud");
+    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0, 0, 0, "cloud");
+
+    viewer.addPointCloud(cloud_temp, "keypoints");
+    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 9, "keypoints");
+    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0, 0, 255, "keypoints");
+
+    while (!viewer.wasStopped())
+    {
+        viewer.spinOnce();
+    }
+    return 0;
 }
