@@ -25,40 +25,56 @@
 #include <pcl/io/ply_io.h>
 
 
-int estimateBorders(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,float re,float reforn) 
+int estimateBorders(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,float re,float reforn)
 { 
-
-	pcl::PointCloud<pcl::Boundary> boundaries; 
-	pcl::BoundaryEstimation<pcl::PointXYZ, pcl::Normal, pcl::Boundary> boundEst; 
+	// 定义用于法线估计的对象
 	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normEst; 
+	// 定义存储法线估计结果的对象
 	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>); 
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_boundary (new pcl::PointCloud<pcl::PointXYZ>); 
-	normEst.setInputCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr(cloud)); 
-	normEst.setRadiusSearch(reforn); 
-	normEst.compute(*normals); 
+	// 设置输入点云
+	normEst.setInputCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr(cloud));
+	// 设置法线估计的搜索半径。设置为分辨率的10倍时，效果较好，主要用于法线估计
+	normEst.setRadiusSearch(reforn);
+	// 执行法线估计
+	normEst.compute(*normals);
 
-	boundEst.setInputCloud(cloud); 
-	boundEst.setInputNormals(normals); 
-	boundEst.setRadiusSearch(re); 
-	boundEst.setAngleThreshold(M_PI/4); 
+
+	// 定义用于存储边界估计结果的对象
+	pcl::PointCloud<pcl::Boundary> boundaries;
+	// 定义用于边界特征估计的对象
+	pcl::BoundaryEstimation<pcl::PointXYZ, pcl::Normal, pcl::Boundary> boundEst; 
+	// 设置输入点云
+	boundEst.setInputCloud(cloud);
+	// 设置输入法线
+	boundEst.setInputNormals(normals);
+	// 设置搜索半径
+	boundEst.setRadiusSearch(re);
+	// 设置角度阈值
+	boundEst.setAngleThreshold(M_PI/4);
+	// 设置搜索方法
 	boundEst.setSearchMethod(pcl::search::KdTree<pcl::PointXYZ>::Ptr (new pcl::search::KdTree<pcl::PointXYZ>)); 
-	boundEst.compute(boundaries); 
+	// 执行边界估计
+	boundEst.compute(boundaries);
 
-	for(int i = 0; i < cloud->points.size(); i++) 
+
+	// 存储边界点
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_boundary (new pcl::PointCloud<pcl::PointXYZ>); 
+	for(int i = 0; i < cloud->points.size(); i++)
 	{ 
-		
-		if(boundaries[i].boundary_point > 0) 
-		{ 
-			cloud_boundary->push_back(cloud->points[i]); 
-		} 
+		if(boundaries[i].boundary_point > 0)
+		{
+			cloud_boundary->push_back(cloud->points[i]);
+		}
 	} 
 
-	boost::shared_ptr<pcl::visualization::PCLVisualizer> MView (new pcl::visualization::PCLVisualizer ("���ƿ�PCL�����ŵ���ͨ����"));
+	// 显示
+	boost::shared_ptr<pcl::visualization::PCLVisualizer> MView (new pcl::visualization::PCLVisualizer ("边界估计"));
 	
-	int v1(0); 
-	MView->createViewPort (0.0, 0.0, 0.5, 1.0, v1); 
-	MView->setBackgroundColor (0.3, 0.3, 0.3, v1); 
+	int v1(0);
+	MView->createViewPort (0.0, 0.0, 0.5, 1.0, v1);
+	MView->setBackgroundColor (0.3, 0.3, 0.3, v1);
 	MView->addText ("Raw point clouds", 10, 10, "v1_text", v1); 
+
 	int v2(0); 
 	MView->createViewPort (0.5, 0.0, 1, 1.0, v2); 
 	MView->setBackgroundColor (0.5, 0.5, 0.5, v2); 
@@ -75,22 +91,16 @@ int estimateBorders(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,float re,float re
 
 	return 0; 
 } 
+
 int
-	main(int argc, char** argv)
+main(int argc, char** argv)
 {
-	srand(time(NULL));
-
-	float re,reforn;
-	re=std::atof(argv[2]);
-	reforn=std::atof(argv[3]);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_src (new pcl::PointCloud<pcl::PointXYZ>); 
-
-
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_src (new pcl::PointCloud<pcl::PointXYZ>);
 
 	//Laden der PCD-Files 
-	pcl::io::loadPCDFile (argv[1], *cloud_src);	
+	pcl::io::loadPCDFile ("1.pcd", *cloud_src);	
 
-	estimateBorders(cloud_src,re,reforn);
+	estimateBorders(cloud_src,0.05f,0.05f);
 
 	return 0;
 }
